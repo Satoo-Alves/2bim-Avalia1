@@ -1,5 +1,3 @@
-// script.js — versão final com autenticação Google + chamada à API
-
 const formulario = document.getElementById("formulario");
 const campoNumero = document.getElementById("numero");
 const area = document.getElementById("desenho");
@@ -8,12 +6,12 @@ const botaoBaixar = document.getElementById("baixar");
 const botaoDesenhar = document.getElementById("btn-desenhar");
 
 let svgAtual = "";
-let idToken = null; // guardamos o token do Google aqui
+let idToken = null;
 
-// ========== 1. Configuração do Google Identity Services ==========
+
 function inicializarGoogle() {
   google.accounts.id.initialize({
-    client_id: "COLE_SEU_CLIENT_ID_AQUI", // ← substitua pelo seu Client ID
+    client_id: "COLE_SEU_CLIENT_ID_AQUI", 
     callback: handleCredentialResponse,
     auto_select: false
   });
@@ -30,19 +28,19 @@ function inicializarGoogle() {
   );
 }
 
-// Quando o usuário faz login, o Google chama esta função
+
 function handleCredentialResponse(response) {
-  idToken = response.credential; // este é o id_token (JWT)
+  idToken = response.credential; 
   botaoDesenhar.disabled = false;
   mensagem.textContent = "Login realizado com sucesso. Agora escolha um número e clique em Desenhar.";
-  mensagem.style.color = "#3fb950"; // verde
+  mensagem.style.color = "#3fb950"; 
 }
 
-// ========== 2. Envio do formulário ==========
+
 formulario.addEventListener("submit", async (evento) => {
   evento.preventDefault();
   mensagem.textContent = "";
-  mensagem.style.color = ""; // volta à cor de erro padrão
+  mensagem.style.color = ""; 
 
   const numero = Number(campoNumero.value);
 
@@ -83,7 +81,7 @@ formulario.addEventListener("submit", async (evento) => {
       return;
     }
 
-    // Sucesso: a resposta é o SVG puro
+   
     svgAtual = await resposta.text();
     area.innerHTML = svgAtual;
     botaoBaixar.hidden = false;
@@ -94,7 +92,7 @@ formulario.addEventListener("submit", async (evento) => {
   }
 });
 
-// ========== 3. Botão de baixar ==========
+
 botaoBaixar.addEventListener("click", () => {
   const arquivo = new Blob([svgAtual], { type: "image/svg+xml" });
   const url = URL.createObjectURL(arquivo);
@@ -105,5 +103,5 @@ botaoBaixar.addEventListener("click", () => {
   URL.revokeObjectURL(url);
 });
 
-// Inicializa o Google quando a página carregar
+
 window.onload = inicializarGoogle;
