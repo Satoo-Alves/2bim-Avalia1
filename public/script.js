@@ -1,107 +1,79 @@
-const formulario = document.getElementById("formulario");
-const campoNumero = document.getElementById("numero");
-const area = document.getElementById("desenho");
-const mensagem = document.getElementById("mensagem");
-const botaoBaixar = document.getElementById("baixar");
-const botaoDesenhar = document.getElementById("btn-desenhar");
+// public/script.js
+let tokenGoogle = null;
 
-let svgAtual = "";
-let idToken = null;
-
-
-function inicializarGoogle() {
+// Função chamada automaticamente pelo Google ao carregar a página
+window.onload = function () {
+  /* global google */
   google.accounts.id.initialize({
-    client_id: "110788931701-lilku8ff0ma528j0b7ro5svit0t0ucbo.apps.googleusercontent.com", 
-    callback: handleCredentialResponse,
-    auto_select: false
+    client_id: "110788931701-lilku8ff0ma528j0b7ro5svit0t0ucbo.apps.googleusercontent.com",
+    callback: handleCredentialResponse
   });
 
-  // Renderiza o botão
   google.accounts.id.renderButton(
     document.getElementById("botao-google"),
-    {
-      theme: "outline",
-      size: "large",
-      text: "signin_with",
-      shape: "rectangular"
-    }
+    { theme: "outline", size: "large" }
   );
-}
-
+};
 
 function handleCredentialResponse(response) {
-  idToken = response.credential; 
-  botaoDesenhar.disabled = false;
-  mensagem.textContent = "Login realizado com sucesso. Agora escolha um número e clique em Desenhar.";
-  mensagem.style.color = "#3fb950"; 
+  tokenGoogle = response.credential;
+  document.getElementById("btn-desenhar").disabled = false;
+  document.getElementById("mensagem").textContent = "Login efetuado com sucesso! Escolha um número e clique em Desenhar.";
 }
 
+const formulario = document.getElementById("formulario");
+const btnDesenhar = document.getElementById("btn-desenhar");
+const elementoDesenho = document.getElementById("desenho");
+const btnBaixar = document.getElementById("baixar");
+const mensagem = document.getElementById("mensagem");
 
-formulario.addEventListener("submit", async (evento) => {
-  evento.preventDefault();
-  mensagem.textContent = "";
-  mensagem.style.color = ""; 
+formulario.addEventListener("submit", async (e) => {
+  e.preventDefault();
 
-  const numero = Number(campoNumero.value);
+  const numero = parseInt(document.getElementById("numero").value, 10);
 
-  if (!Number.isInteger(numero) || numero < 1 || numero > 100) {
-    mensagem.textContent = "Digite um inteiro entre 1 e 100.";
+  if (!tokenGoogle) {
+    mensagem.textContent = "Por favor, faça login com o Google primeiro.";
     return;
   }
 
-  if (!idToken) {
-    mensagem.textContent = "Faça login com o Google antes de desenhar.";
-    return;
-  }
+  btnDesenhar.disabled = true;
+  mensagem.textContent = "Gerando desenho...";
 
   try {
     const resposta = await fetch("/api/desenho", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${idToken}`
+        "Authorization": `Bearer ${tokenGoogle}`
       },
       body: JSON.stringify({ numero })
     });
 
-    if (resposta.status === 400) {
-      mensagem.textContent = "Erro 400: número inválido ou corpo da requisição incorreto.";
-      return;
-    }
-
-    if (resposta.status === 401) {
-      mensagem.textContent = "Erro 401: token inválido, expirado ou e-mail não verificado. Faça login novamente.";
-      idToken = null;
-      botaoDesenhar.disabled = true;
-      return;
-    }
-
     if (!resposta.ok) {
-      mensagem.textContent = `Erro inesperado: ${resposta.status}`;
-      return;
+      throw new Error(`Erro no servidor: ${resposta.status}`);
     }
 
-   
-    svgAtual = await resposta.text();
-    area.innerHTML = svgAtual;
-    botaoBaixar.hidden = false;
-
+    const svgText = await resposta.text();
+    elementoDesenho.innerHTML = svgText;
+    btnBaixar.hidden = false;
+    mensagem.textContent = "";
   } catch (erro) {
-    mensagem.textContent = "Erro de rede ao chamar a API.";
-    console.error(erro);
+    mensagem.textContent = "Erro ao gerar o desenho: " + erro.message;
+  } finally {
+    btnDesenhar.disabled = false;
   }
 });
 
-
-botaoBaixar.addEventListener("click", () => {
-  const arquivo = new Blob([svgAtual], { type: "image/svg+xml" });
-  const url = URL.createObjectURL(arquivo);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = "exemplo.svg";
-  link.click();
+btnBaixar.addEventListener("click", () => {
+  const svgData = elementoDesenho.innerHTML;
+  const blob = new Blob([svgData], { type: "image/svg+xml" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "exemplo.svg";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
   URL.revokeObjectURL(url);
 });
-
-
-window.onload = inicializarGoogle;
