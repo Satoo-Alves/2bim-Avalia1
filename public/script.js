@@ -11,7 +11,7 @@ let idToken = null;
 
 function inicializarGoogle() {
   google.accounts.id.initialize({
-    client_id: "COLE_SEU_CLIENT_ID_AQUI", 
+    client_id: "110788931701-lilku8ff0ma528j0b7ro5svit0t0ucbo.apps.googleusercontent.com", 
     callback: handleCredentialResponse,
     auto_select: false
   });
