@@ -22,6 +22,6 @@ Framework preset: `None`. Build command: vazio. Build output directory: `public`
 
 ## Identificação (preencha após o fork)
 
-Nome: 
-RA: 
-URL: https://
+Nome: Davi Alves de Siqueira
+RA: 2026108955
+URL: 2bim-avalia1-a1b.pages.dev
